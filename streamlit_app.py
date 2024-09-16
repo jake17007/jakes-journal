@@ -11,7 +11,9 @@ import time
 def initialize_firebase():
     if not firebase_admin._apps:
         # Get the Firebase credentials JSON from Streamlit secrets
-        key_dict = json.loads(st.secrets["textkey"])
+        print('here')
+        print(st.secrets)
+        key_dict = json.loads(st.secrets["FIREBASE_CREDENTIALS"])
         cred = credentials.Certificate(key_dict)
         firebase_admin.initialize_app(cred)
     return firestore.client()
