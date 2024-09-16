@@ -2,9 +2,10 @@ import streamlit as st
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 from google.oauth2 import service_account
+import time
 
 @st.cache_resource
 def initialize_firebase():
@@ -42,6 +43,35 @@ def delete_entry(doc_id):
     db.collection("journal_entries").document(doc_id).delete()
 
 st.title("My Journal App")
+
+# Timer functionality
+st.sidebar.header("Timer")
+timer_duration = st.sidebar.number_input("Set Timer (minutes)", min_value=1, value=5)
+start_timer = st.sidebar.button("Start Timer")
+
+timer_placeholder = st.sidebar.empty()
+
+if 'timer_end' not in st.session_state:
+    st.session_state.timer_end = None
+
+if start_timer:
+    st.session_state.timer_end = datetime.now() + timedelta(minutes=timer_duration)
+
+if st.session_state.timer_end:
+    while datetime.now() < st.session_state.timer_end:
+        time_left = st.session_state.timer_end - datetime.now()
+        if time_left.total_seconds() > 0:
+            mins, secs = divmod(time_left.seconds, 60)
+            timer_placeholder.text(f"Time left: {mins:02d}:{secs:02d}")
+            time.sleep(1)
+            st.experimental_rerun()
+        else:
+            break
+    
+    timer_placeholder.text("Timer ended!")
+    if st.sidebar.button("Reset Timer"):
+        st.session_state.timer_end = None
+        st.experimental_rerun()
 
 # Sidebar for adding new entries
 st.sidebar.header("Add New Entry")
