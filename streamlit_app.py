@@ -8,6 +8,7 @@ from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 import base64
+from openai import OpenAI
 
 @st.cache_resource
 def initialize_firebase():
@@ -19,6 +20,9 @@ def initialize_firebase():
 
 # Initialize Firebase using Streamlit's caching
 db = initialize_firebase()
+
+# Set up OpenAI client
+client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 def get_encryption_key(password):
     password = password.encode()
@@ -83,6 +87,19 @@ def update_entry(doc_id, title, content, password):
 def delete_entry(doc_id):
     db.collection("journal_entries").document(doc_id).delete()
 
+def get_chatgpt_feedback(entry_content):
+    try:
+        chat_completion = client.chat.completions.create(
+            messages=[
+                {"role": "system", "content": "You are a helpful therapist providing brief feedback on journal entries. Keep your response to 300 characters or less."},
+                {"role": "user", "content": f"Please provide brief therapeutic feedback on this journal entry: {entry_content}"}
+            ],
+            model="gpt-3.5-turbo",
+        )
+        return chat_completion.choices[0].message.content.strip()
+    except Exception as e:
+        return f"Error getting feedback: {str(e)}"
+
 st.title("Free Writing App")
 
 # Password input
@@ -103,6 +120,11 @@ if password:
     for entry in entries:
         with st.expander(f"{entry['title']} - {entry['timestamp'].strftime('%Y-%m-%d %H:%M')}"):
             st.write(entry['content'])
+            
+            # Get and display ChatGPT feedback
+            feedback = get_chatgpt_feedback(entry['content'])
+            st.write("Therapist's Feedback:")
+            st.info(feedback)
             
             # Update functionality
             update_title = st.text_input("Update Title", value=entry['title'], key=f"update_title_{entry['id']}")
