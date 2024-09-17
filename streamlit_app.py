@@ -92,7 +92,7 @@ def get_chatgpt_feedback(entry_content):
         chat_completion = client.chat.completions.create(
             messages=[
                 {"role": "system", "content": "You are a helpful therapist providing brief feedback on journal entries. Keep your response to 300 characters or less."},
-                {"role": "user", "content": f"Please provide brief therapeutic feedback on this journal entry: {entry_content}"}
+                {"role": "user", "content": f"Please provide brief therapeutic feedback on this journal entry: {entry_content} ---- Then provide a score between 1 to 5 for the following metrics based on the entry: fullfilment score, mood score, positivity score. (Put each score on a new line and say x/5 where x is the score)"}
             ],
             model="gpt-3.5-turbo",
         )
